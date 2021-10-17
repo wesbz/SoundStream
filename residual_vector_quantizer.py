@@ -117,9 +117,8 @@ class VectorQuantizer(nn.Module):
             embed_normalized = self.embed_avg / cluster_size.unsqueeze(0)
             self.embed.data.copy_(embed_normalized)
  
-        loss = F.mse_loss(quantize.detach(), input) * self.commitment
         quantize = input + (quantize - input).detach()
-        return quantize, embed_ind, loss
+        return quantize, embed_ind
 
 
 class ResidualVQ(nn.Module):
@@ -137,16 +136,14 @@ class ResidualVQ(nn.Module):
         quantized_out = 0.
         residual = x
 
-        all_losses = []
         all_indices = []
 
         for layer in self.layers:
-            quantized, indices, loss = layer(residual)
+            quantized, indices = layer(residual)
             residual = residual - quantized
             quantized_out = quantized_out + quantized
 
             all_indices.append(indices)
-            all_losses.append(loss)
 
-        all_losses, all_indices = map(torch.stack, (all_losses, all_indices))
-        return quantized_out, all_indices, all_losses
+        all_indices = map(torch.stack, all_indices)
+        return quantized_out, all_indices

@@ -124,7 +124,7 @@ class SoundStream(nn.Module):
     
     def forward(self, x):
         e = self.encoder(x)
-        quantized, _, _ = self.quantizer(e)
+        quantized, _ = self.quantizer(e)
         o = self.decoder(quantized)
         return o
 
