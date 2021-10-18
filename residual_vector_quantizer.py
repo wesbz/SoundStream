@@ -47,7 +47,6 @@ class KMeans:
             if (self.centroids - new_centroids).pow(2).sum().sqrt() < self.eps:
                 break
         return True, n
-            
 
 
 def exists(val):
@@ -71,6 +70,7 @@ class VectorQuantizer(nn.Module):
         commitment = 1.,
         eps = 1e-5,
         n_embed = None,
+        tolerance = None,
     ):
         super().__init__()
         n_embed = default(n_embed, codebook_size)
@@ -80,6 +80,9 @@ class VectorQuantizer(nn.Module):
         self.decay = decay
         self.eps = eps
         self.commitment = commitment
+        self.tolerance = tolerance
+        self.unused_code = torch.zeros(n_embed)
+        
 
         embed = None
         self.register_buffer('embed', embed)
@@ -110,7 +113,12 @@ class VectorQuantizer(nn.Module):
         quantize = F.embedding(embed_ind, self.embed.transpose(0, 1))
 
         if self.training:
-            ema_inplace(self.cluster_size, embed_onehot.sum(0), self.decay)
+            n_assign = embed_onehot.sum(0)
+            ema_inplace(self.cluster_size, n_assign, self.decay)
+            unused_embed = (1 - n_assign/(n_assign+1e-6))
+            self.unused_code = (self.unused_code + 1) * unused_embed
+            if len((drop_code:=torch.where(self.unused_code > self.tolerance))):
+                self.embed[:,drop_code] = flatten[torch.randint(0, flatten.size(0), (len(drop_code),))].transpose(0, 1)
             embed_sum = flatten.transpose(0, 1) @ embed_onehot
             ema_inplace(self.embed_avg, embed_sum, self.decay)
             cluster_size = laplace_smoothing(self.cluster_size, self.n_embed, self.eps) * self.cluster_size.sum()
