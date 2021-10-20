@@ -3,7 +3,7 @@ from torch._C import ModuleDict
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 
-from .residual_vector_quantizer import ResidualVQ
+from vector_quantize_pytorch import ResidualVQ
 
 # Generator
 
@@ -115,11 +115,14 @@ class Decoder(nn.Module):
 
 
 class SoundStream(nn.Module):
-    def __init__(self, C, D, n_q):
+    def __init__(self, C, D, n_q, codebook_size):
         super().__init__()
 
         self.encoder = Encoder(C=C, D=D)
-        self.quantizer = ResidualVQ(num_quantizers=n_q, dim=D, codebook_size=)
+        self.quantizer = ResidualVQ(
+            num_quantizers=n_q, dim=D, codebook_size=codebook_size,
+            kmeans_init=True, kmeans_iters=100, threshold_ema_dead_code=2
+        )
         self.decoder = Decoder(C=C, D=D)
     
     def forward(self, x):
