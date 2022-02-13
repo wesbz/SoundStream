@@ -1,2 +1,2 @@
 [build-system]
-requirements = ["torch>=1.10.0"]
+requires = ["torch>=1.10.0"]
