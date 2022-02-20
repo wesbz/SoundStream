@@ -21,13 +21,16 @@ def feature_loss(features_stft_disc_x, features_wave_disc_x, features_stft_disc_
     
     return loss
 
-"""
-def spectral_reconstruction_loss(x, G_x, eps=1e-4):
+
+def spectral_reconstruction_loss(x, G_x, sr, dev, eps=1e-4):
+    """
+    Device must be specified because the window function and spctrogram must be on the same device
+    """
     L = 0
     for i in range(6,12):
         s = 2**i
         alpha_s = (s/2)**0.5
-        melspec = MelSpectrogram(sample_rate=sr, n_fft=s, hop_length=s//4, n_mels=8, wkwargs={"device": device}).to(device)
+        melspec = MelSpectrogram(sample_rate=sr, n_fft=s, hop_length=s//4, n_mels=8, wkwargs={"device": dev}).to(dev)
         S_x = melspec(x)
         S_G_x = melspec(G_x)
         
@@ -35,7 +38,7 @@ def spectral_reconstruction_loss(x, G_x, eps=1e-4):
         L += loss
     
     return L
-"""
+
 
 def adversarial_d_loss(features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_stft, lengths_wave):
     wave_disc_names = lengths_wave.keys()

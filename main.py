@@ -7,7 +7,7 @@ from torchaudio.transforms import MelSpectrogram
 from tqdm import tqdm
 
 from net import SoundStream, WaveDiscriminator, STFTDiscriminator
-from loss import adversarial_g_loss, feature_loss, adversarial_d_loss
+from loss import adversarial_g_loss, feature_loss, adversarial_d_loss, spectral_reconstruction_loss
 from dataset import NSynthDataset
 
 
@@ -44,24 +44,10 @@ test_dataset = NSynthDataset(audio_dir="./data/nsynth-test.jsonwav/nsynth-test/a
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn, num_workers=2)
 
 
-def spectral_reconstruction_loss(x, G_x, eps=1e-4):
-    L = 0
-    for i in range(6,12):
-        s = 2**i
-        alpha_s = (s/2)**0.5
-        melspec = MelSpectrogram(sample_rate=sr, n_fft=s, hop_length=s//4, n_mels=8, wkwargs={"device": device}).to(device)
-        S_x = melspec(x)
-        S_G_x = melspec(G_x)
-        
-        loss = (S_x-S_G_x).abs().sum() + alpha_s*(((torch.log(S_x.abs()+eps)-torch.log(S_G_x.abs()+eps))**2).sum(dim=-2)**0.5).sum()
-        L += loss
-    
-    return L
-
 optimizer_g = optim.Adam(soundstream.parameters(), lr=1e-4, betas=(0.5, 0.9))
 optimizer_d = optim.Adam(list(wave_disc.parameters()) + list(stft_disc.parameters()), lr=1e-4, betas=(0.5, 0.9))
 
-criterion_g = lambda x, G_x, features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft: LAMBDA_ADV*adversarial_g_loss(features_stft_disc_G_x, features_wave_disc_G_x, lengths_stft, lengths_wave) + LAMBDA_FEAT*feature_loss(features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft) + LAMBDA_REC*spectral_reconstruction_loss(x, G_x)
+criterion_g = lambda x, G_x, features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft, sr, dev: LAMBDA_ADV*adversarial_g_loss(features_stft_disc_G_x, features_wave_disc_G_x, lengths_stft, lengths_wave) + LAMBDA_FEAT*feature_loss(features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft) + LAMBDA_REC*spectral_reconstruction_loss(x, G_x, sr, device)
 criterion_d = adversarial_d_loss
 
 best_model = soundstream.state_dict().copy()
