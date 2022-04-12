@@ -52,3 +52,14 @@ def adversarial_d_loss(features_stft_disc_x, features_wave_disc_x, features_stft
     generated_loss = torch.cat([generated_stft_loss.view(-1,1), generated_wave_loss], dim=1).mean()
     
     return real_loss + generated_loss
+
+
+
+def criterion_g(x, G_x, features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft, sr, dev):
+    adv_g = LAMBDA_ADV*adversarial_g_loss(features_stft_disc_G_x, features_wave_disc_G_x, lengths_stft, lengths_wave)
+    feature_loss = LAMBDA_FEAT*feature_loss(features_stft_disc_x, features_wave_disc_x, features_stft_disc_G_x, features_wave_disc_G_x, lengths_wave, lengths_stft)
+    spec_loss = LAMBDA_REC*spectral_reconstruction_loss(x, G_x, sr, device)
+    return  adv_g + feature_loss + spec_loss
+
+
+criterion_d = adversarial_d_loss
