@@ -61,7 +61,7 @@ transform = lambda x: torch.stft(x.squeeze(), n_fft=1024, hop_length=256, window
 
 for epoch in range(1, N_EPOCHS+1):
 
-    evaluate(soundstream, stft_disc, wave_disc, transform. train_loader, optimizer_g, optimizer_d, device, sr, train=True, history=hisory['train'])
+    evaluate(soundstream, stft_disc, wave_disc, transform, train_loader, optimizer_g, optimizer_d, device, sr, train=True, history=history['train'])
     print(history['train'])
 
     with torch.no_grad():

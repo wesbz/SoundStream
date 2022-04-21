@@ -7,7 +7,7 @@ def transform(x, device):
     return torch.stft(x.squeeze(), n_fft=1024, hop_length=256, window=torch.hann_window(window_length=1024, device=device), return_complex=False).permute(0, 3, 1, 2)
 
 
-def evaluate(generator, stft_disc, wave_disc, stft, x_loader, optimizer_g, optimizer_d, device, sr, train=false, history=None)
+def evaluate(generator, stft_disc, wave_disc, stft, x_loader, optimizer_g, optimizer_d, device, sr, train=False, history=None):
     models = [generator, stft_disc, wave_disc]
     with contextlib.ExitStack() as s:
         if not train:
